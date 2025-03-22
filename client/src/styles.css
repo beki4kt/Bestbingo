@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans;
+    background: linear-gradient(135deg, #9370DB 0%, #6A5ACD 100%);
+    min-height: 100vh;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .bg-bingo-purple-light {
+    @apply bg-purple-200;
+  }
+  
+  .text-bingo-purple-dark {
+    @apply text-purple-800;
+  }
+  
+  .bg-bingo-orange {
+    @apply bg-orange-500;
+  }
+  
+  .bg-bingo-green {
+    @apply bg-green-500;
+  }
+  
+  /* Animation classes */
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+  }
+}
