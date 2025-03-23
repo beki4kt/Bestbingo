@@ -109,7 +109,13 @@ export class MemStorage implements IStorage {
     const game = await this.getGame(gameId);
     if (!game) return undefined;
     
-    const calledNumbers = [...game.calledNumbers, number];
+    let calledNumbers = [...game.calledNumbers];
+    
+    // Only add to called numbers if this is a new call (not just a countdown update)
+    if (number !== game.currentCall && !calledNumbers.includes(number)) {
+      calledNumbers.push(number);
+    }
+    
     const updatedGame = { 
       ...game, 
       calledNumbers, 

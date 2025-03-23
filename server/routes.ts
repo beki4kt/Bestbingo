@@ -411,19 +411,18 @@ function startNumberCalling(gameId: number) {
     clearInterval(gameIntervals.get(gameId));
   }
   
-  let countdown = 30;
-  let calledNumbers: number[] = [];
-  
   const interval = setInterval(async () => {
     try {
-      // Get game
+      // Get game with current state
       const game = await storage.getGame(gameId);
       if (!game || !game.active) {
         clearInterval(interval);
         return;
       }
       
-      countdown--;
+      // Get current state from the game
+      let countdown = game.countdown - 1;
+      let calledNumbers = [...game.calledNumbers];
       
       // Call a number every 5 seconds
       if (countdown % 5 === 0 && countdown > 0) {
@@ -447,8 +446,13 @@ function startNumberCalling(gameId: number) {
             calledNumbers
           }
         });
+        
+        console.log(`Game ${game.gameId}: Called ${number}, countdown: ${countdown}, total called: ${calledNumbers.length}`);
       } else if (countdown > 0) {
-        // Just update countdown
+        // Update game countdown in storage
+        await storage.updateGameCall(gameId, game.currentCall || 0, countdown);
+        
+        // Broadcast countdown update
         broadcastToGame(gameId, {
           type: 'GAME_UPDATED',
           payload: { countdown }
@@ -457,6 +461,7 @@ function startNumberCalling(gameId: number) {
       
       // End game if countdown reaches 0
       if (countdown <= 0) {
+        console.log(`Game ${game.gameId}: Countdown reached 0, ending game.`);
         await endGame(gameId);
       }
     } catch (error) {
@@ -503,17 +508,19 @@ async function endGame(gameId: number) {
 }
 
 function broadcastToGame(gameId: number, message: WSMessage, exclude: WebSocket[] = []) {
-  for (const [client, data] of clients.entries()) {
+  // Convert Map entries to array to fix iterator issues
+  Array.from(clients.entries()).forEach(([client, data]) => {
     if (data.gameId === gameId && client.readyState === WebSocket.OPEN && !exclude.includes(client)) {
       client.send(JSON.stringify(message));
     }
-  }
+  });
 }
 
 function broadcastToAll(message: WSMessage) {
-  for (const [client, _] of clients.entries()) {
+  // Convert Map entries to array to fix iterator issues
+  Array.from(clients.entries()).forEach(([client, _]) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
     }
-  }
+  });
 }
