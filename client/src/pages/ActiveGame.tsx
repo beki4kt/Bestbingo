@@ -64,7 +64,7 @@ const ActiveGame: React.FC = () => {
         </div>
         <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 flex flex-col items-center">
           <span className="text-xs">Bet</span>
-          <span className="font-bold text-sm">{game.stake}</span>
+          <span className="font-bold text-sm">${game.stake.toFixed(2)}</span>
         </div>
         <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 flex flex-col items-center">
           <span className="text-xs">call</span>

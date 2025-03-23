@@ -158,11 +158,17 @@ export class MemStorage implements IStorage {
   
   async createPlayer(insertPlayer: InsertPlayer): Promise<Player> {
     const id = this.playerCurrentId++;
+    
+    // Make sure cardNumbers is properly typed
+    const cardNumbers: number[][] = insertPlayer.cardNumbers as number[][];
+    
     const player: Player = { 
       ...insertPlayer, 
       id, 
+      cardNumbers,
       markedNumbers: [], 
-      hasBingo: false 
+      hasBingo: false,
+      boardNumber: insertPlayer.boardNumber
     };
     this.players.set(id, player);
     return player;

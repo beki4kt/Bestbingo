@@ -19,7 +19,7 @@ const GameStatusBar: React.FC<GameStatusBarProps> = ({ walletBalance, activeGame
       </div>
       <div className="bg-white/20 backdrop-blur-sm rounded-full flex-1 py-2 flex flex-col items-center">
         <span className="text-sm font-medium">Stake</span>
-        <span className="font-bold">{stake}</span>
+        <span className="font-bold">${stake.toFixed(2)}</span>
       </div>
     </div>
   );
