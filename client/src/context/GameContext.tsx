@@ -65,19 +65,27 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Automatically create a user when connected
     if (isConnected && !user) {
-      fetch('/api/users', { method: 'POST' })
-        .then(res => res.json())
-        .then(data => {
-          setUser({
-            userId: data.id,
-            username: data.username,
-            wallet: data.wallet
+      console.log('Creating user after WebSocket connection established');
+      
+      // Use a slight delay to ensure WebSocket connection is fully established
+      const timer = setTimeout(() => {
+        fetch('/api/users', { method: 'POST' })
+          .then(res => res.json())
+          .then(data => {
+            console.log('User created successfully:', data);
+            setUser({
+              userId: data.id,
+              username: data.username,
+              wallet: data.wallet
+            });
+          })
+          .catch(err => {
+            console.error('Failed to create user:', err);
+            setErrorMessage('Failed to initialize user');
           });
-        })
-        .catch(err => {
-          console.error('Failed to create user:', err);
-          setErrorMessage('Failed to initialize user');
-        });
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
     
     // Listen for active games updates

@@ -18,7 +18,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   wss.on('connection', async (ws) => {
     console.log('Client connected');
+    
+    // Add client to the clients Map
     clients.set(ws, {});
+    
+    // Add a specialized ping/pong mechanism to keep the connection alive
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+      } else {
+        clearInterval(pingInterval);
+      }
+    }, 30000); // every 30 seconds
+    
+    ws.on('pong', () => {
+      // Connection is still alive
+      console.log('Received pong from client');
+    });
     
     // Send active games count when a client connects
     const activeGames = await storage.getActiveGames();
@@ -83,10 +99,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     ws.on('close', () => {
+      // Clean up any ping intervals
+      clearInterval(pingInterval);
+      
+      // Handle player leaving game if needed
       const clientData = clients.get(ws);
       if (clientData && clientData.gameId) {
         handleLeaveGame(ws);
       }
+      
+      // Remove client from tracking
       clients.delete(ws);
       console.log('Client disconnected');
     });
