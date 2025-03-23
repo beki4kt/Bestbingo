@@ -22,10 +22,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Send active games count when a client connects
     const activeGames = await storage.getActiveGames();
-    ws.send(JSON.stringify({
-      type: 'GAME_UPDATED',
-      payload: { activeGames: activeGames.length }
-    }));
+    
+    // Make sure the client is still connected before sending
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'GAME_UPDATED',
+        payload: { activeGames: activeGames.length }
+      }));
+    }
     
     ws.on('message', async (message) => {
       try {

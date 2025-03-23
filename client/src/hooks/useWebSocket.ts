@@ -6,9 +6,21 @@ const useWebSocket = () => {
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const messageCallbacksRef = useRef<Map<string, ((message: any) => void)[]>>(new Map());
-
-  // Initialize WebSocket connection
-  useEffect(() => {
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Initialize and handle WebSocket connection
+  const connectWebSocket = useCallback(() => {
+    // Clear any existing reconnect timers
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
+    // Close existing socket if it's open
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.close();
+    }
+    
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
@@ -37,23 +49,41 @@ const useWebSocket = () => {
       }
     };
 
-    socket.onclose = () => {
-      console.log('WebSocket connection closed');
+    socket.onclose = (event) => {
+      console.log('WebSocket connection closed', event.code, event.reason);
       setIsConnected(false);
+      
+      // Attempt to reconnect after a delay, unless this was a clean close
+      if (event.code !== 1000) {
+        console.log('Scheduling reconnect attempt...');
+        reconnectTimeoutRef.current = setTimeout(() => {
+          console.log('Attempting to reconnect...');
+          connectWebSocket();
+        }, 2000);
+      }
     };
 
     socket.onerror = (err) => {
       console.error('WebSocket error:', err);
       setError('Failed to connect to game server');
     };
-
+  }, []);
+  
+  // Initialize WebSocket connection
+  useEffect(() => {
+    connectWebSocket();
+    
     // Clean up on unmount
     return () => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.close();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.close();
       }
     };
-  }, []);
+  }, [connectWebSocket]);
 
   // Function to send messages
   const sendMessage = useCallback((type: string, payload: any) => {
